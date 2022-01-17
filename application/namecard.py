@@ -17,7 +17,8 @@
 # 위 코드를 간편하게 할 수 있는 방법(생성자를 만들 필요가 없다)
 from dataclasses import dataclass
 import file_util
-import os, math
+import os
+from paging import Paginator
 
 @dataclass # 데코레이터
 class NameCard:
@@ -25,6 +26,12 @@ class NameCard:
     phone: str = '' # default 값 지정 가능
     email: str = ''
     address: str = ''
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+    
+    def __setitem__(self, key, value):
+        return setattr(self, key, value)
 
 # json 모듈: 파이썬 표준 모듈만 처리 가능하다.
 
@@ -42,8 +49,15 @@ class NameCardBook:
         self.book.append(card)
         self.book.sort(key=lambda card : card.name) #추가한 다음 이름으로 정렬
 
-    def update(self):
-        pass
+    def update(self, ix, name, phone, email, address):
+        card = self.book[ix]
+        card.name = name
+        card.phone = phone
+        card.email = email
+        card.address = address
+
+    def get(self, ix): #인덱스를 통하여 참조를 얻어내는 것
+        return self.book[ix]
 
     def remove(self, ix):
         #ix = self.find(name) 매개변수가 name일 경우
@@ -74,20 +88,11 @@ class NameCardBook:
         file_util.save(file_path, self.book)
     
     # 페이지 목록 추출
-    def get_page(self, page_num, count_page_count = 10): # 한 페이지당 몇 번
-        # return 값 : 해당 페이지에 대응하는 데이터 목록과 전체 페이지 수 리턴
-        total_page = math.ceil(len(self.book) / count_page_count)
-        
-        #math 함수를 써서 반올림을 해줘야 한다.
-        #page_num은 내가 보고싶어하는 페이지 넘버
-        start = (page_num-1)*count_page_count
-        end = start + count_page_count
-        page = self.book[start:end]
-        return page, total_page
-
+    def get_page(self, page_num, count_per_page = 10): # 한 페이지당 몇 번
+        page_obj = Paginator(self.book, page_num, count_per_page)
+        return page_obj
 
     
-
 if __name__ == '__main__': # 모듈 테스트
     import random # 테스트에서만 사용하기 때문에
 
@@ -130,26 +135,19 @@ if __name__ == '__main__': # 모듈 테스트
     print("-"*50)
     print()
 
-    print('저장 테스트')
-    main_book.save('book.dat')
+    # print('저장 테스트')
+    # main_book.save('book.dat')
 
-    print()
-    print("-"*50)
-    print()
+    # print()
+    # print("-"*50)
+    # print()
 
-    print('200개 데이터를 구성하여 book.dat로 저장')
-    main_book.book = []
-    addresses = ['도쿄', '오사카', '하라주쿠', '후쿠오카', '교토', '신주쿠']
+    # print('200개 데이터를 구성하여 book.dat로 저장')
+    # main_book.book = []
+    # addresses = ['도쿄', '오사카', '하라주쿠', '후쿠오카', '교토', '신주쿠']
 
-    for i in range(1, 101):
-        main_book.add(f'히나나{i:03}', f'010-1111-{i:04}', f'hinana{i:03}@naver.com', random.choice(addresses))
+    # for i in range(1, 101):
+    #     main_book.add(f'히나나{i:03}', f'010-1111-{i:04}', f'hinana{i:03}@naver.com', random.choice(addresses))
     
-    main_book.save('book.dat')
+    # main_book.save('book.dat')
 
-    print('불러오기 테스트')
-    main_book.load('book.dat')
-    print(main_book.book)
-
-    print()
-    print("-"*50)
-    print()
